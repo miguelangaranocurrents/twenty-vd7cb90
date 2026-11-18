@@ -1,4 +1,5 @@
 import {
+  FieldMetadataType,
   ViewFilterOperand,
   type ActorFilter,
   type AddressFilter,
@@ -23,6 +24,7 @@ import { computeEmptyGqlOperationFilterForLinks } from '@/utils/filter/computeEm
 import { type RecordFilter } from '@/utils/filter/turnRecordFilterGroupIntoGqlOperationFilter';
 import { generateILikeFiltersForCompositeFields } from '@/utils/filter/utils/generateILikeFiltersForCompositeFields';
 import { getFilterTypeFromFieldType } from '@/utils/filter/utils/getFilterTypeFromFieldType';
+import { isExpectedSubFieldName } from '@/utils/filter/utils/isExpectedSubFieldName';
 import { isNonEmptyString } from '@sniptt/guards';
 
 type GetEmptyRecordGqlOperationFilterParams = {
@@ -134,6 +136,30 @@ export const getEmptyRecordGqlOperationFilter = ({
       break;
     }
     case 'CURRENCY':
+      if (
+        isExpectedSubFieldName(
+          FieldMetadataType.CURRENCY,
+          'currencyCode',
+          compositeFieldName,
+        )
+      ) {
+        emptyRecordFilter = {
+          or: [
+            {
+              [correspondingField.name]: {
+                currencyCode: { is: 'NULL' },
+              } as CurrencyFilter,
+            },
+            {
+              [correspondingField.name]: {
+                currencyCode: { ilike: '' },
+              } as CurrencyFilter,
+            },
+          ],
+        };
+        break;
+      }
+
       emptyRecordFilter = {
         or: [
           {
